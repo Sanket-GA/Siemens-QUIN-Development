@@ -1,2 +1,1 @@
-# Siemens-QUIN-Development
-Siemens QUIN Development
+# Sanket-GA-Quin-Assistant

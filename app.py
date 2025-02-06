@@ -18,7 +18,7 @@ st.markdown("""
     <div style='text-align: center; margin-top:-50px; margin-bottom: 5px;margin-left: -50px;'>
     <h2 style='font-size: 60px; font-family: Courier New, monospace;
                     letter-spacing: 2px; text-decoration: none;'>
-    <img src="https://acis.affineanalytics.co.in/assets/images/logo_small.png" alt="logo" width="70" height="60">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Siemens_Energy_logo.svg/1200px-Siemens_Energy_logo.svg.png" alt="logo" width="70" height="60">
     <span style='background: linear-gradient(45deg, #ed4965, #c05aaf);
                             -webkit-background-clip: text;
                             -webkit-text-fill-color: transparent;
@@ -98,7 +98,7 @@ with st.sidebar:
         
     if uploaded_file is not None and st.session_state.file_name==None:
         try:
-            df = pd.read_excel(uploaded_file,sheet_name="Sample data")
+            df = pd.read_excel(uploaded_file,sheet_name=0)
             data_processing(df)
             st.write("Uploaded file details:")
             st.write(f"File name: {uploaded_file.name}")

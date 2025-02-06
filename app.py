@@ -192,7 +192,7 @@ if os.path.exists("database.db"):
                     tab1.info(message["content"]['message'])
                     
                     # Tab- 2 :: Plot
-                    if message['content']['plot']!="No Plot":
+                    if message['content']['plot']!="":
                         fig = go.Figure(data=message['content']['plot'], layout=message['content']['plot'])
                         tab2.plotly_chart(fig)
                     else:
@@ -220,6 +220,7 @@ if os.path.exists("database.db"):
         matched_rows = st.session_state.faq[st.session_state.faq["Questions"].str.contains(escaped_query, case=False, na=False)]
         if not matched_rows.empty:
             flow=1
+            print(f"-----------------------------{flow}----------------------------")
             # print(matched_rows)
             row = matched_rows.iloc[0]
              # Add user message to chat history
@@ -307,6 +308,7 @@ if os.path.exists("database.db"):
             
         else:
             flow=0
+            print(f"-----------------------------{flow}----------------------------")
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
 

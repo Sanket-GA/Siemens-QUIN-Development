@@ -11,6 +11,8 @@ import json
 import os
 import random
 import time
+import re
+from utility.static import add_plot,load_dataframe
 
 
 st.set_page_config(page_title="Quin", layout="wide")
@@ -88,25 +90,53 @@ if "date_range" not in st.session_state:
 if "file_name" not in st.session_state:
     st.session_state.file_name=None
 
+if "faq" not in st.session_state:
+    st.session_state.faq=pd.DataFrame()
+
+
+
+
+
+# Constants
+BASE_PATH = os.getcwd()
+FAQ_FILE = os.path.join(BASE_PATH, "faq_streamlit_genai", "faq.csv")
+LOGO_PATH = "Siemens_Energy_logo.png"
+
+if st.session_state.faq.empty:
+    st.session_state.faq=pd.read_csv(FAQ_FILE)
 
 with st.sidebar:
     if os.path.exists("database.db"):
-        uploaded_file = st.file_uploader("Please upload a file", type=["xlsx"])
+        uploaded_file = st.file_uploader("Please upload a file", type=["xlsx","csv"])
         st.info("The data is already loaded. To load new data, you can upload a file here. Otherwise, feel free to ignore this and proceed to ask your query.")
     else:
-        uploaded_file = st.file_uploader("Please upload a file", type=["xlsx"])
+        uploaded_file = st.file_uploader("Please upload a file", type=["xlsx","csv"])
         
     if uploaded_file is not None and st.session_state.file_name==None:
-        try:
-            df = pd.read_excel(uploaded_file,sheet_name="Sample data")
-            data_processing(df)
-            st.write("Uploaded file details:")
-            st.write(f"File name: {uploaded_file.name}")
-            st.session_state.file_name="process_df.csv"
-            st.write(f"File size: {uploaded_file.size / 1024:.2f} KB")
-            # st.rerun()
-        except Exception as e:
-            st.error(f"Error occurred at data preprocessing :: {e}")
+        if uploaded_file.type=="xlsx":
+            try:
+                df = pd.read_excel(uploaded_file,sheet_name="Sample data")
+                data_processing(df)
+                st.write("Uploaded file details:")
+                st.write(f"File name: {uploaded_file.name}")
+                st.session_state.file_name="process_df.csv"
+                st.write(f"File size: {uploaded_file.size / 1024:.2f} KB")
+                # st.rerun()
+            except Exception as e:
+                st.error(f"Error occurred at data preprocessing :: {e}")
+        else:
+            try:
+                df = pd.read_csv(uploaded_file)
+                data_processing(df)
+                st.write("Uploaded file details:")
+                st.write(f"File name: {uploaded_file.name}")
+                st.session_state.file_name="process_df.csv"
+                st.write(f"File size: {uploaded_file.size / 1024:.2f} KB")
+
+                # st.rerun()
+            except Exception as e:
+                st.error(f"Error occurred at data preprocessing :: {e}")
+
 
     button=st.button("Delete the Autogen Cache")
     if button:
@@ -121,96 +151,221 @@ if os.path.exists("database.db"):
                 st.markdown(message["content"])
         else:
             if message["role"]=="assistant":
-                tab1,tab2,tab3,tab4=st.tabs(['Insights',"📈 Plot","SQL Query","🗃 Data"])
-                # Tab-1 :: Insights
-                tab1.markdown(message["content"]['insight'])
-                tab1.info(message["content"]['message'])
-                
-                # Tab- 2 :: Plot
-                if message['content']['plot']!="":
-                    fig = go.Figure(data=message['content']['plot'], layout=message['content']['plot'])
-                    tab2.plotly_chart(fig)
+                if message["content"]['flow']==1:
+                    tab1,tab2,tab3,tab4=st.tabs(['Insights',"📈 Plot","SQL Query","🗃 Data"])
+                    # Tab-1 :: Insights
+                    tab1.markdown(message["content"]['insight'])
+                    tab1.info(message["content"]['message'])
+                    
+                    # Tab- 2 :: Plot
+                    if message['content']['plot']!="No Plot":
+                        with tab2:
+                            st.image(message['content']['plot'], caption="Visualization", use_container_width=True)
+                    else:
+                        tab2.markdown("No Plots")
+                        
+                    # Tab- 3 :: SQL Query
+                    sql_query=message["content"]['sql_query']
+                    formatted_query = sqlparse.format(sql_query, reindent=True, keyword_case='upper')
+                    tab3.markdown(f"""```bash 
+                    {formatted_query}
+                    """)
+                    with tab3.expander("See sql query explanation.."):
+                            st.markdown(message["content"]['sql_query_exp'])
+                    
+                    # Tab- 4 :: Dataframe
+                    if message["content"]['df']=="":
+                        data_list=""
+                        tab4.write("No Data")
+                    else:
+                        with tab4:
+                            data_list=message["content"]['df']
+                            data_list=os.path.join(BASE_PATH,data_list).replace("\\","//")
+                            print("data_list ::",data_list  )
+                            df=load_dataframe(data_list)
+                            st.dataframe(df)
+
                 else:
-                    tab2.markdown("No Plots")
-                # Tab- 3 :: SQL Query
-                sql_query=message["content"]['sql_query']
-                formatted_query = sqlparse.format(sql_query, reindent=True, keyword_case='upper')
-                tab3.markdown(f"""```bash 
-                {formatted_query}
-                """)
-                with tab3.expander("See sql query explanation.."):
-                        st.markdown(message["content"]['sql_query_exp'])
-                
-                # Tab- 4 :: Dataframe
-                if message["content"]['df']=="":
-                    data_list=""
-                    tab4.write("No Data")
-                else:
-                    tab4.dataframe(message["content"]['df'])
+                    tab1,tab2,tab3,tab4=st.tabs(['Insights',"📈 Plot","SQL Query","🗃 Data"])
+                    # Tab-1 :: Insights
+                    tab1.markdown(message["content"]['insight'])
+                    tab1.info(message["content"]['message'])
+                    
+                    # Tab- 2 :: Plot
+                    if message['content']['plot']!="No Plot":
+                        fig = go.Figure(data=message['content']['plot'], layout=message['content']['plot'])
+                        tab2.plotly_chart(fig)
+                    else:
+                        tab2.markdown("No Plots")
+                    # Tab- 3 :: SQL Query
+                    sql_query=message["content"]['sql_query']
+                    formatted_query = sqlparse.format(sql_query, reindent=True, keyword_case='upper')
+                    tab3.markdown(f"""```bash 
+                    {formatted_query}
+                    """)
+                    with tab3.expander("See sql query explanation.."):
+                            st.markdown(message["content"]['sql_query_exp'])
+                    
+                    # Tab- 4 :: Dataframe
+                    if message["content"]['df']=="":
+                        data_list=""
+                        tab4.write("No Data")
+                    else:
+                        tab4.dataframe(message["content"]['df'])
                     
 
     # Accept user input
     if prompt := st.chat_input("What is up?"):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        escaped_query = re.escape(prompt)
+        matched_rows = st.session_state.faq[st.session_state.faq["Questions"].str.contains(escaped_query, case=False, na=False)]
+        if not matched_rows.empty:
+            flow=1
+            # print(matched_rows)
+            row = matched_rows.iloc[0]
+             # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
+            # Display user message in chat message container
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-        # Display assistant response in chat message container
-        with st.spinner():
-            response= chat(prompt) # await
-        
-        tab1,tab2,tab3,tab4=st.tabs(['Insights',"📈 Plot","SQL Query","🗃 Data"])
-        insights=""
-        response_time=response['Total_time']
-        if type(response['insights'])==list:
-            for i,insight in enumerate(response['insights']):
-                insights+=f"{i+1}. "+insight +"\n\n"
-            message= f"Response Time :: {response_time:.2f} seconds"
-        else:
-            insights=response['insights'] +"\n\n"
-            message= f"Response Time :: {response_time:.2f} seconds"
-        # Tab 1 :: Insights
-        tab1.markdown(insights)
-        tab1.info(message)
-
-        # Tab 2 :: Plots
-        plotly=response['plotly']
-        if plotly!="":
-            fig = go.Figure(data=plotly['data'], layout=plotly['layout'])
-            tab2.plotly_chart(fig)
-        else:
-            tab2.markdown("No Plots")
-        
-        # Tab 3 :: SQL Query
-        sql_query=response['sql_query']
-        sql_explanation=response['sql_query_explanation']
-        tab3.markdown(f"""```bash 
-                {sql_query}
-                """)
-        with tab3.expander("See sql query explanation.."):
-            st.markdown(sql_explanation)
-        
-        # Dataframe
-        if response['db_result']=="":
-            data_list=""
-            tab4.write("No Data")
-        else:
-            data_list=json.loads(response['db_result'])
-            tab4.dataframe(data_list)
+            # Display assistant response in chat message container
+            with st.spinner():
+                # sleep for some sec
+                response={'question': row['Questions'], 
+                'sql_query': row['SQL Query'] ,
+                'sql_query_explanation':"", #matched_rows['sql_query_explanation'] ,
+                "plotly":row['Plot'] ,
+                'insights': row['Insights'] , 
+                'db_result':  row['Data']}
+                
             
+            tab1,tab2,tab3,tab4=st.tabs(['Insights',"📈 Plot","SQL Query","🗃 Data"])
+            insights=""
+            response_time=10
+            if type(response['insights'])==list:
+                for i,insight in enumerate(response['insights']):
+                    insights+=f"{i+1}. "+insight +"\n\n"
+                message= f"Response Time :: {response_time:.2f} seconds"
+            else:
+                insights=response['insights'] +"\n\n"
+                message= f"Response Time :: {response_time:.2f} seconds"
+            # Tab 1 :: Insights
+            tab1.markdown(insights)
+            tab1.info(message)
 
-        data1={"insight":insights,
-        "plot":plotly,
-        "sql_query":sql_query,
-        "sql_query_exp":sql_explanation,
-        "df":data_list,
-        "message":message
-        }
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": data1})
-        st.rerun()
+            # Tab 2 :: Plots
+            plotly=str(row.get('Plot', '')).replace('"', '').strip()
+            print("plotly ::",plotly)
+            if plotly!="No Plot":
+                plotly=os.path.join(BASE_PATH,plotly).replace("\\","//")
+                print("Plot ::",plotly)
+                with tab2:
+                    st.image(plotly, caption="Visualization", use_container_width=True)
+            else:
+                tab2.markdown("No Plots")
+            
+            # Tab 3 :: SQL Query
+            sql_query=response['sql_query']
+            sql_explanation=response['sql_query_explanation']
+            tab3.markdown(f"""```bash 
+                    {sql_query}
+                    """)
+            with tab3.expander("See sql query explanation.."):
+                st.markdown(sql_explanation)
+            
+            # Dataframe
+            if response['db_result']=="":
+                data_list=""
+                tab4.write("No Data")
+            else:
+                with tab4:
+                    data_list=response['db_result']
+                    data_list=os.path.join(BASE_PATH,data_list).replace("\\","//")
+                    print("data_list ::",data_list  )
+                    df=load_dataframe(data_list)
+                    print(df)
+                    st.dataframe(df)
+                    
+
+            data1={"insight":insights,
+            "plot":plotly,
+            "sql_query":sql_query,
+            "sql_query_exp":sql_explanation,
+            "df":data_list,
+            "message":message,
+            "flow":flow
+            }
+            # Add assistant response to chat history
+            st.session_state.messages.append({"role": "assistant", "content": data1})
+            st.rerun()
+
+            
+        else:
+            flow=0
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+
+            # Display user message in chat message container
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            # Display assistant response in chat message container
+            with st.spinner():
+                response= chat(prompt) # await
+            
+            tab1,tab2,tab3,tab4=st.tabs(['Insights',"📈 Plot","SQL Query","🗃 Data"])
+            insights=""
+            response_time=response['Total_time']
+            if type(response['insights'])==list:
+                for i,insight in enumerate(response['insights']):
+                    insights+=f"{i+1}. "+insight +"\n\n"
+                message= f"Response Time :: {response_time:.2f} seconds"
+            else:
+                insights=response['insights'] +"\n\n"
+                message= f"Response Time :: {response_time:.2f} seconds"
+            # Tab 1 :: Insights
+            tab1.markdown(insights)
+            tab1.info(message)
+
+            # Tab 2 :: Plots
+            plotly=response['plotly']
+            if plotly!="":
+                fig = go.Figure(data=plotly['data'], layout=plotly['layout'])
+                tab2.plotly_chart(fig)
+            else:
+                tab2.markdown("No Plots")
+            
+            # Tab 3 :: SQL Query
+            sql_query=response['sql_query']
+            sql_explanation=response['sql_query_explanation']
+            tab3.markdown(f"""```bash 
+                    {sql_query}
+                    """)
+            with tab3.expander("See sql query explanation.."):
+                st.markdown(sql_explanation)
+            
+            # Dataframe
+            if response['db_result']=="":
+                data_list=""
+                tab4.write("No Data")
+            else:
+                data_list=json.loads(response['db_result'])
+                tab4.dataframe(data_list)
+                
+
+            data1={"insight":insights,
+            "plot":plotly,
+            "sql_query":sql_query,
+            "sql_query_exp":sql_explanation,
+            "df":data_list,
+            "message":message,
+            "flow":flow
+            }
+            # Add assistant response to chat history
+            st.session_state.messages.append({"role": "assistant", "content": data1})
+            st.rerun()
+        
+
 else:
     st.info("No any Database exit. Upload the New Csv File")

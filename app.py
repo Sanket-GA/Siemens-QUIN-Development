@@ -228,9 +228,12 @@ if os.path.exists("database.db"):
             # Display user message in chat message container
             with st.chat_message("user"):
                 st.markdown(prompt)
-
+            import random
+            import time
+            response_time=random.randint(5,10)
             # Display assistant response in chat message container
             with st.spinner():
+                time.sleep(response_time)
                 # sleep for some sec
                 response={'question': row['Questions'], 
                 'sql_query': row['SQL Query'] ,
@@ -242,7 +245,8 @@ if os.path.exists("database.db"):
             
             tab1,tab2,tab3,tab4=st.tabs(['Insights',"📈 Plot","SQL Query","🗃 Data"])
             insights=""
-            response_time=10
+            
+
             if type(response['insights'])==list:
                 for i,insight in enumerate(response['insights']):
                     insights+=f"{i+1}. "+insight +"\n\n"

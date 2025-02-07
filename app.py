@@ -25,10 +25,10 @@ st.markdown("""
                             -webkit-background-clip: text;
                             -webkit-text-fill-color: transparent;
                             text-shadow: none;'>
-                    Siemens Quin
+                    Quin
     </span>
     <span style='font-size: 60%;'>
-    <sup style='position: relative; top: 5px; color:white ;'>by Affine</sup> 
+    <sup style='position: relative; top: 5px; color:white ;'></sup> 
     </span>
     </h2>
     </div>

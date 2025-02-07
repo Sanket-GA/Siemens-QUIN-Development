@@ -107,11 +107,13 @@ if st.session_state.faq.empty:
     st.session_state.faq=pd.read_csv(FAQ_FILE, encoding="ISO-8859-1")
 
 with st.sidebar:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Siemens_Energy_logo.svg/1200px-Siemens_Energy_logo.svg.png")
     if os.path.exists("database.db"):
         uploaded_file = st.file_uploader("Please upload a file", type=["xlsx","csv"])
         st.info("The data is already loaded. To load new data, you can upload a file here. Otherwise, feel free to ignore this and proceed to ask your query.")
     else:
         uploaded_file = st.file_uploader("Please upload a file", type=["xlsx","csv"])
+        
         
     if uploaded_file is not None and st.session_state.file_name==None:
         if uploaded_file.type=="xlsx":
@@ -171,8 +173,8 @@ if os.path.exists("database.db"):
                     tab3.markdown(f"""```bash 
                     {formatted_query}
                     """)
-                    with tab3.expander("See sql query explanation.."):
-                            st.markdown(message["content"]['sql_query_exp'])
+                    # with tab3.expander("See sql query explanation.."):
+                    #         st.markdown(message["content"]['sql_query_exp'])
                     
                     # Tab- 4 :: Dataframe
                     if message["content"]['df']=="":
@@ -277,8 +279,8 @@ if os.path.exists("database.db"):
             tab3.markdown(f"""```bash 
                     {sql_query}
                     """)
-            with tab3.expander("See sql query explanation.."):
-                st.markdown(sql_explanation)
+            # with tab3.expander("See sql query explanation.."):
+            #     st.markdown(sql_explanation)
             
             # Dataframe
             if response['db_result']=="":
@@ -349,8 +351,8 @@ if os.path.exists("database.db"):
             tab3.markdown(f"""```bash 
                     {sql_query}
                     """)
-            with tab3.expander("See sql query explanation.."):
-                st.markdown(sql_explanation)
+            # with tab3.expander("See sql query explanation.."):
+            #     st.markdown(sql_explanation)
             
             # Dataframe
             if response['db_result']=="":

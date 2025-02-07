@@ -99,11 +99,12 @@ if "faq" not in st.session_state:
 
 # Constants
 BASE_PATH = os.getcwd()
+# faq_streamlit_genai/faq.csv
 FAQ_FILE = os.path.join(BASE_PATH, "faq_streamlit_genai", "faq.csv")
 LOGO_PATH = "Siemens_Energy_logo.png"
 
 if st.session_state.faq.empty:
-    st.session_state.faq=pd.read_csv(FAQ_FILE)
+    st.session_state.faq=pd.read_csv(FAQ_FILE, encoding="ISO-8859-1")
 
 with st.sidebar:
     if os.path.exists("database.db"):

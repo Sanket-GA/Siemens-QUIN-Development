@@ -77,3 +77,6 @@ The '05 - Negotiate & close' stage had the lowest revenue, totaling 9.49m.",faq_
 How many opportunities were closed within the first quarter of 2017?,"SELECT COUNT(DISTINCT HPE_Opportunity_Id) AS opportunity_count
 FROM sales_table
 WHERE Close_Date BETWEEN '2017-01-01' AND '2017-03-31'","No opportunities were closed within the first quarter of 2017, as the data indicates an opportunity count of 0.",No Plot,faq_streamlit_genai\data\closed_quarter.csv
+How many opportunities were closed within the first quarter of 2017?,"SELECT COUNT(DISTINCT HPE_Opportunity_Id) AS total_opportunities_closed
+FROM sales_table
+WHERE Close_Date BETWEEN '2017-01-01' AND '2017-03-31'",A total of 128 opportunities were closed within the first quarter of 2017.,No Plot,faq_streamlit_genai\data\total_opportunity_closed.csv

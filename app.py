@@ -28,7 +28,7 @@ st.markdown("""
                     Quin
     </span>
     <span style='font-size: 60%;'>
-    <sup style='position: relative; top: 5px; color:white ;'></sup> 
+    <sup style='position: relative; top: 5px; color:white ;'>by Affine</sup> 
     </span>
     </h2>
     </div>
